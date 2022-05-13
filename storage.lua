@@ -38,7 +38,7 @@ function this:entries(lo, hi, maxSize)
 		return nil, g.errCode.COMPACTED
 	end
 	if hi > self:lastIndex() + 1 then
-		g.panic('entries hi(' .. hi .. ') is out of bound lastindex(' .. self:lastIndex() .. ')')
+		log.panic('entries hi(' .. hi .. ') is out of bound lastindex(' .. self:lastIndex() .. ')')
 	end
 	if #self.ents == 1 then
 		return nil, g.text.unavailable
@@ -98,7 +98,7 @@ function this:createSnapShot(i, cs, data)
 	end
 	local offset = self.ents[1].index
 	if i > self:lastIndex() then
-		g.panic('snapshot ' .. i .. ' is out of bound lastindex(' .. self:lastIndex() .. ')')
+		log.panic('snapshot ' .. i .. ' is out of bound lastindex(' .. self:lastIndex() .. ')')
 	end
 	self.snapshot.metadata.index = i
 	self.snapshot.metadata.term = self.ents[i - offset].term
@@ -117,7 +117,7 @@ function this:compact(compactIndex)
 		return g.errCode.COMPACTED
 	end
 	if compactIndex > self:lastIndex() then
-		g.panic('snapshot ' .. i .. ' is out of bound lastindex(' .. self:lastIndex() .. ')')
+		log.panic('snapshot ' .. i .. ' is out of bound lastindex(' .. self:lastIndex() .. ')')
 	end
 	local i = compactIndex - offset
 	local ents, k = {g.newEntry()}, 2
@@ -166,7 +166,7 @@ function this:append(entries)
 			j = j + 1
 		end
 	else
-		g.panic('missing log entry [last:' .. self:lastIndex() .. ', append at:' .. entries[1].index .. ']')
+		log.panic('missing log entry [last:' .. self:lastIndex() .. ', append at:' .. entries[1].index .. ']')
 	end
 end
 

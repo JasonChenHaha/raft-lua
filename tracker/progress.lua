@@ -93,7 +93,7 @@ function this:isPaused()
 	elseif self.state == g.stateType.SNAPSHOT then
 		return true
 	else
-		g.panic('unexpected state')
+		log.panic('unexpected state')
 	end
 end
 

@@ -16,7 +16,7 @@ local readOnly = {
 local this = readOnly
 this.__index = this
 
-this.newReadOnly = function(option)
+this.new = function(option)
 	local o = {
 		option = option;
 		pendingReadIndex = {};
@@ -55,7 +55,7 @@ function this:advance(m)
 		i = i + 1
 		rs = self.pendingReadIndex[okctx]
 		if not rs then
-			g.panic('cannot find corresponding read state from pending map')
+			log.panic('cannot find corresponding read state from pending map')
 		end
 		rss[j] = rs
 		j = j + 1

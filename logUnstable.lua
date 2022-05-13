@@ -87,11 +87,11 @@ function this:truncateAndAppend(ents)
 			i = i + 1
 		end
 	elseif after <= self.offset then
-		log.print('replace the unstable entries from index ' .. after)
+		log.info('replace the unstable entries from index ' .. after)
 		self.offset = after
 		self.entries = ents
 	else
-		log.print('truncate the unstable entries before index ' .. after)
+		log.info('truncate the unstable entries before index ' .. after)
 		self.entries = self:slice(lo, hi)
 		local i = #self.entries + 1
 		for _, v in ipairs(ents) do
@@ -108,11 +108,11 @@ end
 
 function this:mustCheckOutOfBounds(lo, hi)
 	if lo > hi then
-		g.panic('invalid unstable.slice ' .. lo .. ' > ' .. hi)
+		log.panic('invalid unstable.slice ' .. lo .. ' > ' .. hi)
 	end
 	local upper = self.offset + #self.entries
 	if lo < self.offset or hi > upper then
-		g.panic(string.format('unstable.slice[%d,%d) out of bound [%d,%d]', lo, hi, self.offset, upper))
+		log.panic(string.format('unstable.slice[%d,%d) out of bound [%d,%d]', lo, hi, self.offset, upper))
 	end
 end
 

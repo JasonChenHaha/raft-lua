@@ -19,7 +19,7 @@ this.__index = this
 
 this.newLog = function(storage, maxNextEntsSize)
 	if not storage then
-		g.panic('storage must not be nil')
+		log.panic('storage must not be nil')
 	end
 	local o = {
 		storage = storage;
@@ -28,11 +28,11 @@ this.newLog = function(storage, maxNextEntsSize)
 	}
 	local firstIndex, err = storage:firstIndex()
 	if err then
-		g.panic(err)
+		log.panic(err)
 	end
 	local lastIndex, err = storage:lastIndex()
 	if err then
-		g.panic(err)
+		log.panic(err)
 	end
 	o.unstable.offset = lastIndex + 1
 	o.committed = firstIndex - 1
@@ -51,7 +51,7 @@ function this:maybeAppend(index, logTerm, committed, ...)
 		local lastnewi = index + #ents
 		local ci = self:findConflict(ents)
 		if ci == 0 or ci <= self.committed then
-			g.panic('entry ' .. ci .. ' conflict with committed entry [committed(' .. self.committed .. ')]')
+			log.panic('entry ' .. ci .. ' conflict with committed entry [committed(' .. self.committed .. ')]')
 		else
 			local offset = index + 1
 			self:append(unpack(table.sub(ents, ci - offset + 1, #ents)))
@@ -69,7 +69,7 @@ function this:append(...)
 	end
 	local after = ents[1].index - 1
 	if after < self.committed then
-		g.panic('after (' .. after .. ') is out of range [committed(' .. self.committed .. ')]')
+		log.panic('after (' .. after .. ') is out of range [committed(' .. self.committed .. ')]')
 	end
 	self.unstable:truncateAndAppend(ents)
 	return self:lastIndex()
@@ -79,7 +79,7 @@ function this:findConflict(ents)
 	for _, v in ipairs(ents) do
 		if not self:matchTerm(v.index, v.term) then
 			if v.index < self:lastIndex() then
-				log.print(string.format('found conflict at index %d [existing term: %d, conflicting term: %d]',
+				log.info(string.format('found conflict at index %d [existing term: %d, conflicting term: %d]',
 					v.index, self:zeroTermOnErrCompacted(self:term(v.index)), v.term))
 			end
 			return v.index
@@ -91,7 +91,7 @@ end
 function this:findConflictByTerm(index, term)
 	local li = self:lastIndex()
 	if index > li then
-		log.print('index(' .. index .. ') is out of range [0, lastIndex(' .. li .. ')] in findConflictByTerm')
+		log.warning('index(' .. index .. ') is out of range [0, lastIndex(' .. li .. ')] in findConflictByTerm')
 		return index
 	end
 	while true do
@@ -116,7 +116,7 @@ function this:nextEnts()
 	if self.committed + 1 > off then
 		local ents, err = self:slice(off, self.committed + 1, self.maxNextEntsSize)
 		if err then
-			g.panic('unexpected error when getting unapplied entries (' .. err .. ')')
+			log.panic('unexpected error when getting unapplied entries (' .. err .. ')')
 		end
 		return ents
 	end
@@ -145,7 +145,7 @@ function this:firstIndex()
 	end
 	local i, err = self.storage:firstIndex()
 	if err then
-		g.panic(err)
+		log.panic(err)
 	end
 	return i
 end
@@ -157,7 +157,7 @@ function this:lastIndex()
 	end
 	local i, err = self.storage.lastIndex()
 	if err then
-		g.panic(err)
+		log.panic(err)
 	end
 	return i
 end
@@ -165,7 +165,7 @@ end
 function this:commitTo(tocommit)
 	if self.committed < tocommit then
 		if self:lastIndex() < tocommit then
-			g.panic(string.format('tocommit(%d) is out of range [lastIndex(%d)]. Was the raft log corrupted, truncated, or lost?', tocommit, self:lastIndex()))
+			log.panic(string.format('tocommit(%d) is out of range [lastIndex(%d)]. Was the raft log corrupted, truncated, or lost?', tocommit, self:lastIndex()))
 		end
 		self.committed = tocommit
 	end
@@ -174,7 +174,7 @@ end
 function this:appliedTo(i)
 	if i == 0 then return end
 	if self.committed < i or i < self.applied then
-		g.panic(string.format('applied(%d) is out of range [prevApplied(%d), committed(%d)]', i, self.applied, self.committed))
+		log.panic(string.format('applied(%d) is out of range [prevApplied(%d), committed(%d)]', i, self.applied, self.committed))
 	end
 	self.applied = i
 end
@@ -190,7 +190,7 @@ end
 function this:lastTerm()
 	local t, err = self:term(self:lastIndex())
 	if err then
-		g.panic('unexpected error when getting the last term (' .. err .. ')')
+		log.panic('unexpected error when getting the last term (' .. err .. ')')
 	end
 	return t
 end
@@ -211,7 +211,7 @@ function this:term(i)
 	if err == g.errCode.COMPACTED or err == g.errCode.UNAVALIABLE then
 		return 0, err
 	end
-	g.panic(err)
+	log.panic(err)
 end
 
 function this:entries(i, maxSize)
@@ -229,7 +229,7 @@ function this:allEntries()
 	if err == g.errCode.COMPACTED then
 		return self:allEntries()
 	end
-	g.panic(err)
+	log.panic(err)
 end
 
 function this:isUpToDate(lasti, term)
@@ -255,7 +255,7 @@ end
 
 function this:restore(s)
 	self:print()
-	log.print(string.format('starts to restore snapshot [index:%d, term:%d]', s.metadata.index, s.metadata.term))
+	log.info(string.format('starts to restore snapshot [index:%d, term:%d]', s.metadata.index, s.metadata.term))
 	self.committed = s.metadata.index
 	self.unstable.restore(s)
 end
@@ -274,9 +274,9 @@ function this:slice(lo, hi, maxSize)
 		if err = g.errCode.COMPACTED then
 			return nil, err
 		elseif err == g.errCode.UNAVALIABLE then
-			g.panic(string.format('entries[%d:%d] is unavailable from storage', lo, math.min(hi, self.unstable.offset)))
+			log.panic(string.format('entries[%d:%d] is unavailable from storage', lo, math.min(hi, self.unstable.offset)))
 		elseif err then
-			g.panic(err)
+			log.panic(err)
 		end
 		if #storedEnts < math.min(hi, l.unstable.offset) - lo then
 			return storedEnts, nil
@@ -299,14 +299,14 @@ end
 
 function this:mustCheckOutOfBounds(lo, hi)
 	if lo > hi then
-		g.panic('invalid slice ' .. lo .. ' > ' .. hi)
+		log.panic('invalid slice ' .. lo .. ' > ' .. hi)
 	end
 	local fi = self:firstIndex()
 	if lo < fi then
 		return g.errCode.COMPACTED
 	end
 	if hi > self:lastIndex() then
-		g.panic(string.format('slice[%d,%d] out of bound [%d,%d]', lo, hi, fi, self:lastIndex()))
+		log.panic(string.format('slice[%d,%d] out of bound [%d,%d]', lo, hi, fi, self:lastIndex()))
 	end
 end
 
@@ -317,7 +317,7 @@ function this:zeroTermOnErrCompacted(t, err)
 	if err == g.errCode.COMPACTED then
 		return 0
 	end
-	g.panic('unexpected error (' .. err .. ')')
+	log.panic('unexpected error (' .. err .. ')')
 end
 
 return this

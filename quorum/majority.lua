@@ -68,14 +68,14 @@ function this:describe(l)
 	table.sort(info, function(a, b)
 		return a.id < b.id
 	end)
-	log.print(string.concat(' ', size) .. '    idx\n')
+	log.info(string.concat(' ', size) .. '    idx\n')
 	for _, v in ipairs(info) do
 		if ~v.ok then
-			log.print('?' .. string.concat(' ', size))
+			log.info('?' .. string.concat(' ', size))
 		else
-			log.print(string.concat('x', v.bar) .. '>' .. string.concat(' ', size-bar))
+			log.info(string.concat('x', v.bar) .. '>' .. string.concat(' ', size-bar))
 		end
-		log.print(string.format(' %5d    (id=%d)\n', v.idx, v.id))
+		log.info(string.format(' %5d    (id=%d)\n', v.idx, v.id))
 	end
 end
 

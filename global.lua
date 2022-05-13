@@ -20,28 +20,18 @@ this.errCode = {
 	STEP_PEER_NOT_FOUND = 6;
 	PROPOSAL_DROPPED = 7;
 }
-this.errText = {
-	[1] = 'requested index is unavailable due to compaction';
-	[2] = 'requested index is older than the existing snapshot';
-	[3] = 'requested entry at index is unavailable';
-	[4] = 'snapshot is temporarily unavailable';
-	[5] = 'raft: cannot step raft local message';
-	[6] = 'raft: cannot step as peer not found';
-	[7] = 'raft proposal dropped';
-}
-
 
 this.entryType = {
 	NORMAL = 0;
 	CONFCHANGE = 1;
 }
 
-this.messageType = {
+this.msgType = {
 	HUP = 0;
 	BEAT = 1;
 	PROP = 2;
 	APP = 3;
-	APPRESP = 4;
+	APP_RESP = 4;
 	VOTE = 5;
 	VOTE_RESP = 6;
 	SNAP = 7;
@@ -104,14 +94,6 @@ local readOnlyOption = {
 	LEASE_BASED = 1;
 }
 
-this.panic = function(err)
-	if type(err) == 'number' then
-		err = this.errText[err]
-	end
-	log.print(err)
-	ngx.exit(0)
-end
-
 local entry = {
 	-- term num				任期号
 	-- index num			索引号
@@ -154,7 +136,7 @@ end
 
 this.newMessage = function()
 	return {
-		-- type messageType
+		-- type msgType
 		-- to num
 		-- from num
 		-- term num
@@ -261,6 +243,22 @@ this.table_compare = function(t1, t2)
 		return true
 	end
 	return base_compare(t1, t2) and base_compare(t2, t1)
+end
+
+this.bytesEqual = function(a, b)
+	if #a ~= #b then return false end
+	for i, v in ipairs(a) do
+		if v ~= b[i] then return false end
+	end
+	return true
+end
+
+this.bytesToString = function(t)
+	return string.char(unpack(t))
+end
+
+this.bytesToTable = function(t)
+	return cjson.decode(this.bytesToString(t))
 end
 
 return this

@@ -33,7 +33,7 @@ end
 
 function this:add(inflight)
 	if self:full() then
-		g.panic('cannot add into a full inflights')
+		log.panic('cannot add into a full inflights')
 	end
 	local next = self.start + self.count
 	if next > self.size then

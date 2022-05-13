@@ -8,6 +8,7 @@ local log = require('log')
 local g = require('global')
 local jointConfig = require('joint')
 local majorityConfig = require('quorum.majority')
+local inflights = require('tracker.inflights')
 
 local config = {
 	-- voters jointConfig
@@ -149,6 +150,18 @@ end
 
 function this:resetVotes()
 	self.votes = {}
+end
+
+function this:resetProgress(id, lastIndex)
+	for _, v in pairs(self.progress) do
+		v.next = lastIndex + 1
+		v.inflights = inflights.new(self.maxInflight)
+		if v.id == id then
+			v.match = lastIndex
+		else
+			v.match = 0
+		end
+	end
 end
 
 function this:recordVote(id, v)
